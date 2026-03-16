@@ -77,29 +77,135 @@
 export class DabbaService {
   constructor(serviceName, area) {
     // Your code here
+    this.serviceName=serviceName
+    this.area=area
+    this.customers=[]
+    this._nextId=1
+
   }
 
   addCustomer(name, address, mealPreference) {
-    // Your code here
+ 
+  if(!['veg','nonveg','jain'].some(pref=>pref == mealPreference.trim().toLowerCase())) return null
+  if(this.customers.some(customer=>customer.name.trim().toLowerCase() == name.trim().toLowerCase())) return null
+  const customer={
+    id:this._nextId++,
+    name,
+    address,
+    mealPreference,
+    active:true,
+    delivered:false
+    }
+   
+    this.customers.push(customer)
+    return customer
+
   }
 
   removeCustomer(name) {
     // Your code here
+//      removeCustomer(name)
+//  *     - Sets customer's active to false (soft delete)
+//  *     - Returns true if found and deactivated
+//  *     - Returns false if not found or already inactive
+    const customer=this.customers.find((c=> c.name.trim().toLowerCase() === name.trim().toLowerCase()))
+    if(!customer) return false
+    
+    if(!customer.active){
+      return false
+    }
+    customer.active=false
+    return true
+    
   }
 
   createDeliveryBatch() {
     // Your code here
+//      - Returns array of delivery objects for all ACTIVE customers
+//  *     - Each delivery: { customerId: id, name, address, mealPreference,
+//  *       batchTime: new Date().toISOString() }
+//  *     - Resets delivered to false for all active customers before creating batch
+//  *     - Returns empty array if no active customers
+    const filterActive=this.customers.filter(customer=>customer.active==true)
+    if(filterActive.length==0) return []
+
+    for (let customer of filterActive){
+
+      customer.delivered=false 
+    }
+    const batch=filterActive.map(customer=>{
+      return {
+        customerId:customer.id,
+        name:customer.name,
+        address:customer.address,
+        mealPreference:customer.mealPreference,
+        batchTime: new Date().toISOString()
+      }
+    })
+    
+
+    return batch
+
   }
 
   markDelivered(customerId) {
     // Your code here
+//      - Finds active customer by id, sets delivered to true
+//  *     - Returns true if found and marked
+//  *     - Returns false if not found or not active
+    const customer=this.customers.find(customer=>customer.id==customerId)
+    if(!customer || !customer.active) return false
+    customer.delivered=true
+    return true
   }
 
   getDailyReport() {
     // Your code here
+//      getDailyReport()
+//  *     - Returns report object for ACTIVE customers only:
+//  *       {
+//  *         totalCustomers: number (active only),
+//  *         delivered: number (active and delivered === true),
+//  *         pending: number (active and delivered === false),
+//  *         mealBreakdown: { veg: count, nonveg: count, jain: count }
+//  *       }
+//  *     - mealBreakdown counts active customers only
+    const activeCustomer=this.customers.filter(customer=>customer.active === true)
+    // console.log(activeCustomer)
+    const delivered=activeCustomer.filter(customer=>customer.delivered == true).length
+    const pending=activeCustomer.length - delivered
+    const mealBreakdown=activeCustomer.reduce((count,currentCustomer)=>{
+      if(currentCustomer.mealPreference =='veg'){
+        count.veg++
+      }else if(currentCustomer.mealPreference=='nonveg'){
+        count.nonveg++
+      }else if(currentCustomer.mealPreference=='jain'){
+        count.jain++
+      }
+      return count
+
+    },{"veg":0,"nonveg":0,"jain":0})
+
+    return {
+      totalCustomers:activeCustomer.length,
+      delivered,
+      pending,
+      mealBreakdown
+      
+    }
+
   }
 
   getCustomer(name) {
     // Your code here
+    const customer=this.customers.find(c=>c.name.trim().toLowerCase()===name.trim().toLowerCase())
+    if(!customer) return null
+    return customer
   }
 }
+
+// const newDabba=new DabbaService("mealservice","Muzaffarpur")
+// newDabba.addCustomer("Rahul Kumar","Muzaffarpur","veg")
+// console.log(newDabba)
+// console.log(newDabba.removeCustomer("Rahul Kumar"))
+// console.log(newDabba)
