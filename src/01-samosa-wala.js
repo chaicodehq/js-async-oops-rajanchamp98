@@ -74,13 +74,89 @@
  *   const boundFn = fixWithBind(cart);         // properly bound sellItem
  */
 export function createSamosaCart(ownerName, location) {
-  // Your code here
+  return {
+    owner: ownerName,
+    location: location,
+    menu: { samosa: 15, jalebi: 20, kachori: 25 },
+    sales: [],
+
+    sellItem: function (itemName, quantity) {
+      if (!this.menu[itemName] || quantity <= 0)
+        return -1;
+      const itemSold = {
+        item: itemName,
+        quantity,
+        total: this.menu[itemName] * quantity,
+      };
+
+      this.sales.push(itemSold);
+
+      return itemSold.total;
+    },
+    getDailySales:function(){
+      if(this.sales.length == 0 ) return 0
+      const totalSales=this.sales.reduce((total,current)=>{
+        total+=current.total
+        return total
+      },0)
+      return totalSales
+
+    },
+    getPopularItem:function(){
+      if(this.sales.length==0) return null
+      const totalItemSaleCount=this.sales.reduce((itemCount,current)=>{
+        itemCount[current.item]=(itemCount[current.item]|| 0) + current.quantity
+        return itemCount
+
+      },{})
+
+      let maxItem=null
+      let maxQty=0
+
+      for(let item in totalItemSaleCount){
+        if(totalItemSaleCount[item]>maxQty){
+          maxItem=item
+          maxQty=totalItemSaleCount[item]
+        }
+      }
+      return maxItem
+
+    },
+    // - moveTo(newLocation)
+//  *     Updates this.location to newLocation.
+//  *     Returns string: "${this.owner} ka cart ab ${newLocation} pe hai!"
+    moveTo:function (newLocation){
+      this.location=newLocation
+      return `${this.owner} ka cart ab ${newLocation} pe hai!`
+
+    },
+//     - resetDay()
+//  *     Clears this.sales array (empty kar do).
+//  *     Returns string: "${this.owner} ka naya din shuru!"
+//  *
+    resetDay:function (){
+      this.sales=[]
+      return `${this.owner} ka naya din shuru!`
+    }
+  };
 }
 
 export function demonstrateThisLoss(cart) {
   // Your code here
+  const {sellItem} = cart
+  return sellItem
 }
 
 export function fixWithBind(cart) {
   // Your code here
+  return cart.sellItem.bind(cart)
+
 }
+
+
+// const samosa1=new createSamosaCart("Rohan","Delhi")
+// console.log(samosa1.sellItem("jalebi",6))
+// console.log(samosa1.sellItem("samosa",3))
+// console.log(samosa1.sellItem("kachori",9))
+// console.log(samosa1.getDailySales())
+// console.log(samosa1.getPopularItem())
