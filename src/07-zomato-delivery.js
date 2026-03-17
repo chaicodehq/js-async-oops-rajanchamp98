@@ -8,7 +8,7 @@
  *
  * Pipeline: placeOrder -> confirmOrder -> assignRider -> deliverOrder
  *
- * Rider Names Pool: ["Rahul", "Priya", "Amit", "Neha", "Vikram"]
+// * Rider Names Pool: ["Rahul", "Priya", "Amit", "Neha", "Vikram"]
  *
  * Function: placeOrder(restaurant, items)
  *   - Returns a new Promise
@@ -86,24 +86,125 @@
  */
 export function placeOrder(restaurant, items) {
   // Your code here
+//    - Returns a new Promise
+//  *   - Validates: restaurant must be non-empty string, items must be non-empty array
+//  *   - If invalid: reject with Error "Invalid order details!"
+//  *   - If valid: resolve (with small delay ~50ms) with:
+//  *     { orderId: Math.floor(Math.random() * 10000),
+//  *       restaurant, items, status: "placed",
+//  *       timestamp: new Date().toISOString() }
+
+ 
+  return new Promise((resolve,reject)=>{
+     if(restaurant.trim()=="" || items.length==0){
+      reject(new Error("Invalid order details!"))
+  }
+  setTimeout(()=>{
+     resolve({
+    orderId:Math.floor(Math.random()*1000),
+    restaurant,
+    items,
+    status:"placed",
+    timestamp:new Date().toISOString
+   })
+  },50)
+  
+
+  })
+
 }
 
 export function confirmOrder(order) {
   // Your code here
+//   *   - Returns a new Promise
+//  *   - Validates: order must have orderId and status === "placed"
+//  *   - If invalid: reject with Error "Order cannot be confirmed!"
+//  *   - If valid: resolve with { ...order, status: "confirmed", estimatedTime: 30 }
+return new Promise((resolve,reject)=>{
+  if(!Object.keys(order).includes("orderId") || order.status !=="placed"){
+    reject(new Error("Order cannot be confirmed!"))
+    return
+  }
+   resolve({
+    ...order,
+    status:"confirmed",
+    estimatedTime:30
+   })
+})
 }
 
 export function assignRider(order) {
+  // * Rider Names Pool: ["Rahul", "Priya", "Amit", "Neha", "Vikram"]
   // Your code here
+//    *   - Returns a new Promise
+//  *   - Validates: order must have status === "confirmed"
+//  *   - If invalid: reject with Error "Order not confirmed yet!"
+//  *   - If valid: pick a random rider from the pool
+//  *   - Resolve with { ...order, rider: selectedRider, status: "assigned" }
+const pool=["Rahul", "Priya", "Amit", "Neha", "Vikram"]
+const selectRider=pool[Math.floor(Math.random()*pool.length)]
+return new Promise((resolve,reject)=>{
+  if(order.status!=="confirmed"){
+    reject(new Error("Order not confirmed yet!"))
+    return
+  }
+  resolve({
+    ...order,
+    rider:selectRider,
+    status:"assigned"
+  })
+})
+
+
 }
 
 export function deliverOrder(order) {
   // Your code here
+//    *   - Returns a new Promise
+//  *   - Validates: order must have status === "assigned" and a rider
+//  *   - If invalid: reject with Error "No rider assigned!"
+//  *   - If valid: resolve with { ...order, status: "delivered",
+//  *     deliveredAt: new Date().toISOString() }
+return new Promise((resolve,reject)=>{
+  if(order.status!="assigned" && !order.rider){
+    reject(new Error("No rider assigned!"))
+    return
+  }
+  resolve({
+    ...order,
+    status:"delivered",
+    deliveredAt: new Date().toISOString()
+  })
+})
 }
 
 export function processDelivery(restaurant, items) {
-  // Your code here
+
+   return placeOrder(restaurant, items)
+    .then(order => confirmOrder(order))
+    .then(order => assignRider(order))
+    .then(order => deliverOrder(order))
+    .catch(error => ({ error: error.message, status: "failed" }));
+  
+
+
+  
 }
 
 export function processMultipleOrders(orderList) {
   // Your code here
+//   Function: processMultipleOrders(orderList)
+//  *   - Takes array of { restaurant, items } objects
+//  *   - Processes EACH with processDelivery
+//  *   - Uses Promise.allSettled to handle all orders
+//  *   - Returns Promise resolving with array of results
+//  *   - Each result: { status: "fulfilled", value } or { status: "rejected", reason }
+  return Promise.allSettled(
+    orderList.map((order)=>{
+      const {restaurant,items}=order
+
+      return processDelivery(restaurant,items)
+    })
+
+  )
 }
