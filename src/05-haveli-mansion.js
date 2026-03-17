@@ -93,33 +93,108 @@ export class HaveliSecurity {
 
   constructor(haveliName, passcode, maxResidents) {
     // Your code here
+//      *   constructor(haveliName, passcode, maxResidents)
+//  *     - this.haveliName = haveliName (public)
+//  *     - this.#passcode = passcode
+//  *     - this.#residents = []
+//  *     - this.#accessLog = []
+//  *     - this.#maxResidents = maxResidents
+this.haveliName=haveliName
+this.#passcode=passcode
+this.#residents=[]
+this.#accessLog=[]
+this.#maxResidents=maxResidents
+
   }
 
   addResident(name, role, passcode) {
-    // Your code here
+
+    if(this.#passcode!= passcode) return { success: false, message: "Galat passcode!" }
+    if(!['malik','naukar','mehmaan'].some(field=>field==role.trim().toLowerCase())) return { success: false, message: "Invalid role!" }
+    if(this.#residents.some(resident=>resident.name.trim().toLowerCase()==name.trim().toLowerCase())) return { success: false, message: "Already a resident!" }
+    if(this.#residents.length >= this.#maxResidents) return { success: false, message: "Haveli full hai!" }
+    this.#residents.push({
+      name,
+      role,
+      addedAt:new Date().toISOString()
+    })
+
+    return { success: true, message: `${name} ab haveli ka ${role} hai!` }
+
+
   }
 
   removeResident(name, passcode) {
     // Your code here
+//      *     - Only works if passcode matches
+//  *     - Removes resident by name from #residents
+//  *     - Agar passcode wrong: return { success: false, message: "Galat passcode!" }
+//  *     - Agar resident not found: return { success: false, message: "Resident nahi mila!" }
+//  *     - Returns { success: true, message: "${name} ko haveli se nikal diya!" }
+    if(this.#passcode != passcode) return { success: false, message: "Galat passcode!" }
+    const resident=this.#residents.find(resident=>resident.name.trim().toLowerCase()==name.trim().toLowerCase())
+    if(!resident) return { success: false, message: "Resident nahi mila!" }
+    const filteredArray=this.#residents.filter(resident=>resident.name.trim().toLowerCase() != name.trim().toLowerCase())
+    this.#residents=filteredArray
+    return { success: true, message: `${name} ko haveli se nikal diya!` }
+    
   }
 
   verifyAccess(name) {
     // Your code here
+//      *     - Checks if name is in #residents
+//  *     - If yes: logs { name, time: new Date().toISOString(), allowed: true } to #accessLog
+//  *       Returns { allowed: true, message: "Swagat hai ${name}!" }
+//  *     - If no: logs { name, time: new Date().toISOString(), allowed: false } to #accessLog
+//  *       Returns { allowed: false, message: "Aapka entry allowed nahi hai!" }
+    const resident=this.#residents.find(resident=>resident.name.trim().toLowerCase() == name.trim().toLowerCase())
+    if(!resident){
+      this.#accessLog.push(
+        { name, time: new Date().toISOString(), allowed: false }
+      )
+      return { allowed: false, message: "Aapka entry allowed nahi hai!" }
+
+    } 
+    this.#accessLog.push({ name, time: new Date().toISOString(), allowed: true })
+    return { allowed: true, message: `Swagat hai ${name}!` }
+
   }
 
   getAccessLog(passcode) {
     // Your code here
+//      *     - Returns COPY of #accessLog if passcode matches
+//  *     - Returns null if passcode is wrong
+    if(this.#passcode != passcode) return null
+    const copyOfAccessLog=structuredClone(this.#accessLog)
+    return copyOfAccessLog
   }
 
   changePasscode(oldPasscode, newPasscode) {
     // Your code here
+//     - Validates oldPasscode matches current #passcode
+//  *     - newPasscode must be at least 4 characters
+//  *     - If old wrong: return { success: false, message: "Purana passcode galat hai!" }
+//  *     - If new too short: return { success: false, message: "Naya passcode bahut chhota hai!" }
+//  *     - Updates #passcode, returns { success: true, message: "Passcode badal diya!" }
+    if(this.#passcode != oldPasscode) return { success: false, message: "Purana passcode galat hai!" }
+    if(newPasscode.trim().length<4) return { success: false, message: "Naya passcode bahut chhota hai!" }
+    this.#passcode=newPasscode.trim()
+    return { success: true, message: "Passcode badal diya!" }
+
+
+ 
   }
 
   getResidentCount() {
     // Your code here
+    return this.#residents.length
   }
 
   isResident(name) {
     // Your code here
+    if(this.#residents.some(resident=>resident.name.trim().toLowerCase()==name.trim().toLowerCase())){
+      return true
+    }
+    return false
   }
 }
