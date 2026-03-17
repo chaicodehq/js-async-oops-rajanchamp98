@@ -74,16 +74,92 @@
  */
 export function orderChai(type, quantity) {
   // Your code here
+  //      - Returns a new Promise
+  //  *   - Valid types: "cutting", "special", "ginger", "masala"
+  //  *   - If type is invalid: reject with Error message "Yeh chai available nahi hai!"
+  //  *   - If quantity <= 0 or not a number: reject with Error message "Kitni chai chahiye bhai?"
+  //  *   - If valid: resolve with { type, quantity, total: price * quantity }
+  //  *     (use setTimeout with 100ms delay to simulate preparation)
+  //  *
+  const prices = { cutting: 10, special: 20, ginger: 15, masala: 25 };
+  return new Promise((resolve, reject) => {
+    const isValidChai = Object.keys(prices).some((chai) => chai == type);
+    if (!isValidChai) reject(new Error("Yeh chai available nahi hai!"));
+    if (quantity <= 0 || typeof quantity != "number")
+      reject(new Error("Kitni chai chahiye bhai?"));
+    setTimeout(
+      () => resolve({ type, quantity, total: prices[type] * quantity }),
+      100,
+    );
+  });
 }
 
 export function checkIngredients(ingredient) {
   // Your code here
+  //   *   - Returns a new Promise
+  //  *   - Valid ingredients: ["tea", "milk", "sugar", "ginger", "cardamom"]
+  //  *   - If ingredient is in the list: resolve with { ingredient, available: true }
+  //  *   - If not: reject with Error message "${ingredient} khatam ho gaya!"
+
+  const ingredients = ["tea", "milk", "sugar", "ginger", "cardamom"];
+
+  return new Promise((resolve, reject) => {
+    const isValidIngredient = ingredients.some(
+      (i) => i == ingredient.trim().toLowerCase(),
+    );
+    if (isValidIngredient) {
+      resolve({ ingredient, available: true });
+    } else {
+      reject(new Error(`${ingredient} khatam ho gaya!`));
+    }
+  });
 }
 
 export function prepareChaiWithTimeout(type, timeoutMs) {
   // Your code here
+  //    *   - Returns a Promise that uses Promise.race
+  //  *   - Race between:
+  //  *     1. orderChai(type, 1) — the actual chai preparation
+  //  *     2. A timeout Promise that rejects after timeoutMs with
+  //  *        Error message "Bahut der ho gayi, chai nahi bani!"
+  //  *   - If chai is ready before timeout: resolves with chai order
+  //  *   - If timeout fires first: rejects with timeout error
+  return Promise.race([
+    new Promise((resolve, reject) => {
+      orderChai(type, 1)
+        .then((value) => {
+          if (!value) reject();
+          resolve(value);
+        })
+        .catch((error) => {
+          reject(new Error(error));
+        });
+    }),
+    new Promise((resolve, reject) => {
+      setTimeout(() => {
+        reject(new Error("Bahut der ho gayi, chai nahi bani!"));
+      }, timeoutMs);
+    }),
+  ]);
 }
 
 export function processChaiQueue(orders) {
   // Your code here
+  //    *   - Takes array of { type, quantity } objects
+  //  *   - Processes each order using orderChai
+  //  *   - Returns Promise that resolves with array of results
+  //  *   - Each result: { status: "fulfilled", value: orderResult }
+  //  *     or { status: "rejected", reason: errorMessage }
+  //  *   - Like Promise.allSettled behavior — ALL orders are attempted,
+  //  *     failures don't stop other orders
+  //  *   - Agar orders array empty hai, resolve with empty array
+ if(orders.length === 0){
+  return Promise.resolve([])
+ }
+
+  return Promise.allSettled(
+    orders.map(order =>
+      orderChai(order.type, order.quantity).catch(error=>Promise.reject(error.message))
+    )
+  );
 }
