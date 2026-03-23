@@ -88,25 +88,138 @@
  *   //     { status: "rejected", reason: "Item name required!" }]
  */
 export function prepareOrder(item, prepTime) {
-  // Your code here
+  return new Promise((resolve, reject) => {
+    if (!item) {
+      reject(new Error("Item name required!"))
+      return
+    }
+    if( typeof prepTime !="number"||prepTime <= 0 ){
+      reject(new Error("Invalid prep time!"))
+      return
+    }
+    setTimeout(()=>{
+      resolve({
+        item,
+        ready:true,
+        prepTime
+      })
+
+    },prepTime)
+
+
+  })
 }
 
 export function prepareBatch(items) {
   // Your code here
+//    *   - Takes array of { name, prepTime } objects
+//  *   - Uses Promise.all to prepare ALL items simultaneously
+//  *   - Calls prepareOrder(item.name, item.prepTime) for each
+//  *   - Returns Promise resolving with array of prepared items
+//  *   - If ANY single item fails, the ENTIRE batch fails (Promise.all behavior)
+//  *   - If items array is empty, resolve with empty array
+
+  if(!Array.isArray(items) || items.length==0) {
+    return Promise.resolve([])
+  }
+
+  return Promise.all(
+    items.map(item=>{
+      const {name,prepTime}=item
+
+      return prepareOrder(name,prepTime)
+
+    })
+
+
+  )
+
 }
 
 export function getFirstReady(items) {
   // Your code here
+//   *   - Takes array of { name, prepTime } objects
+//  *   - Uses Promise.race to get the FIRST item that's ready
+//  *   - Returns Promise resolving/rejecting with the first settled Promise
+//  *   - If items array is empty, reject with Error "No items to prepare!"
+if(!Array.isArray(items) || items.length==0) {
+  return Promise.reject(new Error("No items to prepare!"))  
+}
+return Promise.race(
+  items.map((item)=>{
+    const {name,prepTime}=item
+    return prepareOrder(name,prepTime)
+  })
+
+)
+
+
 }
 
 export function prepareSafeBatch(items) {
   // Your code here
+//   *   - Takes array of { name, prepTime } objects
+//  *   - Uses Promise.allSettled to handle ALL outcomes
+//  *   - Returns Promise resolving with array of results:
+//  *     Each: { status: "fulfilled", value: preparedItem }
+//  *     Or:   { status: "rejected", reason: errorMessage }
+//  *   - Never rejects — always resolves with full results array
+//  *   - If items array is empty, resolve with empty array
+
+ if(!Array.isArray(items) || items.length==0){
+  return Promise.resolve([])
+ }
+
+ return Promise.allSettled(
+  items.map(item=>{
+    const{name,prepTime}=item
+
+    return prepareOrder(name,prepTime).catch(error=>Promise.reject(error.message))
+  })
+ )
+
+
 }
 
 export function deliverWithTimeout(orderPromise, timeoutMs) {
   // Your code here
+//    * Function: deliverWithTimeout(orderPromise, timeoutMs)
+//  *   - Takes a Promise (orderPromise) and timeout in milliseconds
+//  *   - Uses Promise.race between orderPromise and a timeout
+//  *   - If orderPromise resolves first: returns the result
+//  *   - If timeout fires first: rejects with Error "Delivery timeout!"
+//  *   - timeoutMs must be > 0, otherwise reject with Error "Invalid timeout!"
+
+if(timeoutMs <= 0) {
+  return Promise.reject(new Error("Invalid timeout!"))  
+}
+
+return Promise.race([
+  orderPromise,
+  new Promise((resolve,reject)=>{
+
+    setTimeout(()=>{
+      reject(new Error("Delivery timeout!"))
+    },timeoutMs)
+
+  })
+])
+
+
 }
 
 export function batchWithRetry(items, maxRetries) {
   // Your code here
+//   * Function: batchWithRetry(items, maxRetries)
+//  *   - Tries prepareBatch(items)
+//  *   - If it fails, retries up to maxRetries times
+//  *   - Returns result of first successful attempt
+//  *   - If all attempts fail, throws the last error
+//  *   - maxRetries must be >= 0 (0 means no retries, just one attempt)
+//  *   - Each retry is a fresh call to prepareBatch
+
+  for(let i=0;i<=maxRetries;i++){
+    return prepareBatch(items)
+  }
+
 }
