@@ -119,59 +119,169 @@
  *   }
  */
 export class TempleQueue {
-  #devotees;
+  #devotees=[];
   #maxCapacity;
   #vipEnabled;
 
   constructor(templeName, maxCapacity) {
-    // Your code here
+      this.templeName = templeName
+      this.#devotees = []
+      this.#maxCapacity = maxCapacity>0?maxCapacity:100
+      this.#vipEnabled = false
   }
-
   get length() {
-    // Your code here
+    return this.#devotees.length
   }
 
   get isEmpty() {
     // Your code here
+    return this.#devotees.length===0
   }
 
   get vipEnabled() {
     // Your code here
+    return this.#vipEnabled
   }
 
   set vipEnabled(value) {
-    // Your code here
+//      - Only accepts boolean values
+//  *       - If non-boolean passed, throw TypeError("VIP status must be a boolean")
+//  *       - Sets this.#vipEnabled
+    if(typeof value !='boolean') {
+      throw new TypeError("VIP status must be a boolean")
+    }
+    this.#vipEnabled=value
+    
   }
 
   enqueue(name, type) {
     // Your code here
+//     *       - type: "regular" or "vip"
+//  *       - If type invalid (not "regular" or "vip"): return null
+//  *       - If name is empty/falsy: return null
+//  *       - If queue is full (#devotees.length >= #maxCapacity): return null
+//  *       - Creates devotee: { name, type, joinedAt: new Date().toISOString() }
+//  *       - If type is "vip" AND #vipEnabled is true: add to FRONT of queue (unshift)
+//  *       - If type is "vip" AND #vipEnabled is false: treat as regular (add to back)
+//  *       - If type is "regular": add to BACK of queue (push)
+//  *       - Returns the devotee object
+
+    if(type!="regular" && type !="vip") return null
+    if(!name || name=="") return null
+    if(this.#devotees.length >= this.#maxCapacity){
+      return null
+    }
+    const devotee={
+      name,
+      type,
+      joinedAt:new Date().toISOString()
+    }
+    if(type == 'vip' && this.vipEnabled==true){
+      this.#devotees.unshift(devotee)    
+    }else if(type=="vip" && this.vipEnabled==false){
+      this.#devotees.push(devotee)
+    }else{
+      this.#devotees.push(devotee)
+    }
+    return devotee
+
+
   }
 
   dequeue() {
     // Your code here
+//      - Removes and returns the FIRST devotee from queue
+//  *       - Returns null if queue is empty
+
+    if(this.isEmpty){
+      return null
+    }
+    const devoteeShifted=this.#devotees.shift()
+    
+    return devoteeShifted
+
+    
   }
 
   peek() {
     // Your code here
+    if(this.isEmpty) return null
+    return this.#devotees[0]
   }
 
   contains(name) {
     // Your code here
+//      *       - Returns true if a devotee with that name is in the queue
+//  *       - Returns false otherwise
+   const devotee= this.#devotees.find((devotee)=>devotee.name === name)
+   if(!devotee) return false
+   return true
   }
 
   toArray() {
     // Your code here
+//      *       - Returns a COPY of the devotees array
+//  *       - Modifying returned array should not affect internal queue
+    const clonedDevoteesArray=[...this.#devotees]
+    return clonedDevoteesArray
   }
 
   static merge(queue1, queue2) {
     // Your code here
+//      *       - Takes two TempleQueue instances
+//  *       - Creates a NEW TempleQueue with name "${queue1.templeName}-${queue2.templeName}"
+//  *       - maxCapacity = queue1's capacity + queue2's capacity (use length as approximation
+//  *         or accept sum of both toArray lengths + some buffer)
+//  *       - Adds all devotees from queue1 first, then queue2 (maintaining order)
+//  *       - Returns the new merged queue
+    const name=`${queue1.templeName}-${queue2.templeName}`
+   const maxCapacity = queue1.toArray().length + queue2.toArray().length + 10;
+    const mergeQue=new TempleQueue(name,maxCapacity);
+    queue1.toArray().forEach(devote=>{
+      mergeQue.enqueue(devote.name,devote.type)
+    })
+
+    queue2.toArray().forEach(devote=>{
+      mergeQue.enqueue(devote.name,devote.type)
+    })
+
+    return mergeQue
+    
+
   }
 
   static fromArray(templeName, maxCapacity, arr) {
     // Your code here
+//      *       - Creates a new TempleQueue from an array of name strings
+//  *       - Each name becomes a "regular" type devotee
+//  *       - Returns the new queue
+//  *       - If arr is not an array, return empty queue
+
+    if(!Array.isArray(arr)) return new TempleQueue()
+    const newTepmle=new TempleQueue(templeName,maxCapacity)
+    arr.forEach(name=>{
+      newTepmle.enqueue(name,"regular")
+    })
+    return newTepmle
+
+
   }
 
   [Symbol.iterator]() {
     // Your code here
+//      *       - Makes the queue iterable with for...of
+//  *       - Yields each devotee object in order (front to back)
+//  *       - Does NOT remove devotees (non-destructive iteration)
+let index=0;
+const data=this.#devotees
+return{ next(){
+  if(index < data.length){
+    return {value:data[index++],done:false};
+  }else{
+    return {done:true};
+  }
+}
+  }
+
   }
 }
